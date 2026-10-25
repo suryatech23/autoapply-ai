@@ -1,0 +1,16 @@
+.streamlit/secrets.toml
+.streamlit/secrets.toml.pre-autoapply-*.bak
+.streamlit/application_tracker.json
+.streamlit/career_profile.json
+.streamlit/*.tmp
+.streamlit/*.bak
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+*.pre-autoapply-*.bak
+.DS_Store
+Thumbs.db
