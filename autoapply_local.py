@@ -9,6 +9,17 @@ PROFILE_PATH = os.path.join(PRIVATE_DIR, "career_profile.json")
 _ALLOWED_SECRET_NAMES = {"GROQ_API_KEY", "GEMINI_API_KEY"}
 
 
+def public_demo_mode():
+    """Use session-only storage when the public hosted-demo flag is enabled."""
+    setting = os.environ.get("AUTOAPPLY_PUBLIC_DEMO")
+    if setting is None:
+        try:
+            setting = st.secrets.get("AUTOAPPLY_PUBLIC_DEMO", False)
+        except Exception:
+            setting = False
+    return str(setting).strip().lower() in {"1", "true", "yes", "on"}
+
+
 def app_page_path(relative_path):
     """Resolve a multipage target against the installed app directory."""
     return os.path.abspath(os.path.join(APP_ROOT, relative_path))
@@ -38,6 +49,9 @@ def _save_json(path, value):
 
 
 def load_applications():
+    if public_demo_mode():
+        items = st.session_state.get("_public_demo_applications", [])
+        return items if isinstance(items, list) else []
     items = _load_json(APPLICATIONS_PATH, [])
     return items if isinstance(items, list) else []
 
@@ -45,10 +59,16 @@ def load_applications():
 def save_applications(items):
     if not isinstance(items, list):
         raise ValueError("Application tracker data must be a list.")
+    if public_demo_mode():
+        st.session_state["_public_demo_applications"] = items[:500]
+        return
     _save_json(APPLICATIONS_PATH, items[:500])
 
 
 def load_profile():
+    if public_demo_mode():
+        value = st.session_state.get("_public_demo_profile", {})
+        return value if isinstance(value, dict) else {}
     value = _load_json(PROFILE_PATH, {})
     return value if isinstance(value, dict) else {}
 
@@ -68,11 +88,16 @@ def save_profile(profile):
             cleaned[key] = list(dict.fromkeys(str(item).strip()[:100] for item in value if str(item).strip()))[:40]
         else:
             cleaned[key] = str(value or "").strip()[:500]
+    if public_demo_mode():
+        st.session_state["_public_demo_profile"] = cleaned
+        return
     _save_json(PROFILE_PATH, cleaned)
 
 
 def remove_saved_provider_key(setting):
     """Clear only a supported local provider key; OAuth settings are left intact."""
+    if public_demo_mode():
+        raise RuntimeError("Provider keys are not saved in public demo mode.")
     if setting not in _ALLOWED_SECRET_NAMES:
         raise ValueError("Unsupported AI provider setting.")
     secrets_path = os.path.join(PRIVATE_DIR, "secrets.toml")
@@ -321,9 +346,10 @@ def _handle_logout(st):
     clear_keys = {
         "analysis_result", "latex_resume", "active_job_hash",
         "active_job_description", "scraped_jobs",
+        "_public_demo_applications", "_public_demo_profile",
     }
     for key in list(st.session_state.keys()):
-        if key in clear_keys or key.startswith(("coach_messages_", "coach_audio_", "coach_transcript_", "resume_edit_")):
+        if key in clear_keys or key.startswith(("coach_messages_", "coach_audio_", "coach_transcript_", "resume_edit_", "session_api_key_")):
             st.session_state.pop(key, None)
     st.switch_page(app_page_path("app.py"))
 

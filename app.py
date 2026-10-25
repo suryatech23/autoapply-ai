@@ -14,7 +14,7 @@ import streamlit as st
 import time
 from datetime import datetime
 
-from autoapply_local import apply_theme, load_applications, load_profile, render_nav, save_applications, save_profile
+from autoapply_local import apply_theme, load_applications, load_profile, public_demo_mode, render_nav, save_applications, save_profile
 
 try:
     from groq import Groq
@@ -594,6 +594,8 @@ def saved_api_key(engine_choice):
     setting = "GROQ_API_KEY" if "Groq" in engine_choice else "GEMINI_API_KEY"
     if st.session_state.get(f"disabled_api_key_{setting}"):
         return ""
+    if public_demo_mode():
+        return str(st.session_state.get(f"session_api_key_{setting}", "") or "").strip()
     value = ""
     try:
         value = str(st.secrets.get(setting, "") or "").strip()
@@ -610,6 +612,8 @@ def saved_api_key(engine_choice):
 
 def save_api_key_locally(setting, value):
     """Persist one provider key locally while preserving OAuth and other provider settings."""
+    if public_demo_mode():
+        raise RuntimeError("Provider keys cannot be saved in public demo mode.")
     if setting not in {"GROQ_API_KEY", "GEMINI_API_KEY"}:
         raise ValueError("Unsupported AI provider setting.")
     secret_value = str(value or "").strip()
@@ -969,7 +973,40 @@ else:
         secret_setting = "GROQ_API_KEY" if "Groq" in engine_choice else "GEMINI_API_KEY"
         configured_key = saved_api_key(engine_choice)
         provider_label = "Groq" if "Groq" in engine_choice else "Gemini"
-        if configured_key:
+        if public_demo_mode():
+            if configured_key:
+                st.success(f"{provider_label} key is active for this browser session only.")
+                key_override = st.text_input(
+                    f"Replace {provider_label} key for this session (optional)",
+                    type="password",
+                    placeholder="Leave blank to keep using the session key",
+                    key=f"public_key_override_{secret_setting}",
+                    help="This hosted demo never saves provider keys to its shared files.",
+                )
+                if key_override.strip():
+                    st.session_state[f"session_api_key_{secret_setting}"] = key_override.strip()
+                api_key_input = key_override.strip() or configured_key
+                if st.button("Clear key from this session", key=f"clear_session_api_key_{secret_setting}"):
+                    st.session_state.pop(f"session_api_key_{secret_setting}", None)
+                    st.session_state.pop(f"public_key_override_{secret_setting}", None)
+                    st.session_state.pop(f"public_key_input_{secret_setting}", None)
+                    st.rerun()
+            else:
+                st.info("Enter a provider key to use AI features. Public demo mode keeps it in this browser session only.")
+                input_label = "Groq API Key" if "Groq" in engine_choice else "Gemini API Key"
+                input_placeholder = "gsk_..." if "Groq" in engine_choice else "AIzaSy..."
+                key_draft = st.text_input(
+                    input_label,
+                    type="password",
+                    placeholder=input_placeholder,
+                    key=f"public_key_input_{secret_setting}",
+                    help="The key is used for this session and is not saved to the hosted app.",
+                )
+                api_key_input = key_draft.strip()
+                if api_key_input:
+                    st.session_state[f"session_api_key_{secret_setting}"] = api_key_input
+                st.caption("Close or clear this session to remove the key.")
+        elif configured_key:
             st.success(f"{provider_label} key loaded from private local settings.")
             key_override = st.text_input(
                 f"{provider_label} key override (optional)",
@@ -1191,7 +1228,7 @@ else:
                                 "saved_at": datetime.now().astimezone().isoformat(timespec="seconds"),
                             })
                             save_applications(current_tracker)
-                        st.success("Role saved to your local tracker.")
+                        st.success("Role saved for this browser session." if public_demo_mode() else "Role saved to your local tracker.")
                         st.rerun()
 
                 draft_matches_role = (
@@ -1456,7 +1493,7 @@ else:
                     if not audio_consent:
                         st.warning("Approve the separate voice transcription consent first.")
                     elif not api_key_input:
-                        st.warning("Add and save an AI provider key in the sidebar before transcribing.")
+                        st.warning("Add a provider key for this session before transcribing." if public_demo_mode() else "Add and save an AI provider key in the sidebar before transcribing.")
                     else:
                         try:
                             with st.spinner("Transcribing your voice note…"):
@@ -1503,7 +1540,7 @@ else:
                 elif not ai_data_consent:
                     st.warning("Approve the AI data-sharing notice above before using the career coach.")
                 elif not api_key_input:
-                    st.warning("Add and save an AI provider key in the sidebar to use the career coach.")
+                    st.warning("Add a provider key for this session to use the career coach." if public_demo_mode() else "Add and save an AI provider key in the sidebar to use the career coach.")
                 else:
                     conversation = list(st.session_state[chat_key])
                     st.session_state[chat_key].append({"role": "user", "content": question})

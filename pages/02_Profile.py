@@ -1,13 +1,13 @@
 import streamlit as st
 
-from autoapply_local import apply_theme, load_profile, render_nav, save_profile
+from autoapply_local import apply_theme, load_profile, public_demo_mode, render_nav, save_profile
 
 st.set_page_config(page_title="AutoApply AI · Profile", page_icon="👤", layout="wide")
 apply_theme(st, hide_sidebar=True)
 render_nav(st)
 st.markdown('<div class="autoapply-kicker">Your preferences and growth plan</div>', unsafe_allow_html=True)
 st.title("Career profile")
-st.caption("Use these preferences to speed up job searches and keep your growth goals visible. Your uploaded resume is not stored in this profile.")
+st.caption("Use these preferences during this browser session. Your uploaded resume is not stored in this profile." if public_demo_mode() else "Use these preferences to speed up job searches and keep your growth goals visible. Your uploaded resume is not stored in this profile.")
 
 profile = load_profile()
 countries = ["USA", "India", "United Kingdom", "Canada", "Germany", "Australia", "United Arab Emirates", "Singapore", "Custom / Type Any Country"]
@@ -50,7 +50,7 @@ if save:
         "skills_to_build": [item.strip() for item in skills.splitlines() if item.strip()],
     }
     save_profile(saved)
-    st.success("Career preferences saved privately on this device.")
+    st.success("Career preferences saved for this browser session." if public_demo_mode() else "Career preferences saved privately on this device.")
 
 analysis = st.session_state.get("analysis_result") or {}
 gaps = [str(item).strip() for item in analysis.get("missing_skills", []) if str(item).strip()]

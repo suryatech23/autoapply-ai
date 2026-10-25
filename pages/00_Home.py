@@ -1,6 +1,6 @@
 import streamlit as st
 
-from autoapply_local import app_page_path, apply_theme, load_applications, load_profile, render_nav
+from autoapply_local import app_page_path, apply_theme, load_applications, load_profile, public_demo_mode, render_nav
 
 st.set_page_config(page_title="AutoApply AI · Home", page_icon="⚡", layout="wide")
 apply_theme(st, hide_sidebar=True)
@@ -67,7 +67,7 @@ with st.container(key="home-quicklinks"):
         st.page_link(app_page_path("pages/02_Profile.py"), label="Edit career profile", icon="👤", width="stretch")
     with right, st.container(border=True):
         st.markdown("### 🗂️ Application Tracker")
-        st.caption("Keep next steps, follow-up dates, and notes in a private local file on this device.")
+        st.caption("Keep next steps, follow-up dates, and notes in this browser session." if public_demo_mode() else "Keep next steps, follow-up dates, and notes in a private local file on this device.")
         st.page_link(app_page_path("pages/01_Application_Tracker.py"), label="View your tracker", icon="🗂️", width="stretch")
 
-st.info("Privacy: profile preferences and saved roles stay in local files. Resume uploads stay in this session. AI features send selected content only after you approve the in-app notice.")
+st.info("Public demo: profile preferences and saved roles stay in this browser session, not shared files. Resume uploads stay in this session. AI features send selected content only after you approve the in-app notice." if public_demo_mode() else "Privacy: profile preferences and saved roles stay in local files. Resume uploads stay in this session. AI features send selected content only after you approve the in-app notice.")

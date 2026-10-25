@@ -4,14 +4,14 @@ from datetime import date, datetime, timedelta
 
 import streamlit as st
 
-from autoapply_local import app_page_path, apply_theme, load_applications, render_nav, save_applications
+from autoapply_local import app_page_path, apply_theme, load_applications, public_demo_mode, render_nav, save_applications
 
 st.set_page_config(page_title="AutoApply AI · Applications", page_icon="🗂️", layout="wide")
 apply_theme(st, hide_sidebar=True)
 render_nav(st)
 st.markdown('<div class="autoapply-kicker">Stay on top of your search</div>', unsafe_allow_html=True)
 st.title("Application tracker")
-st.caption("Saved roles, next steps, follow-up dates, and notes stay on this device in a local file. Resume files are not copied here.")
+st.caption("Saved roles, next steps, follow-up dates, and notes stay in this browser session. Resume files are not copied here." if public_demo_mode() else "Saved roles, next steps, follow-up dates, and notes stay on this device in a local file. Resume files are not copied here.")
 
 applications = load_applications()
 statuses = ["Saved", "Tailoring", "Ready to apply", "Applied", "Interview", "Offer", "Closed"]
@@ -70,4 +70,4 @@ else:
     st.download_button("Download tracker as CSV", output.getvalue().encode("utf-8-sig"), "autoapply_application_tracker.csv", "text/csv")
 
 st.divider()
-st.caption("Application stages and notes are stored locally on this computer. Nothing is submitted to an employer from the tracker.")
+st.caption(("Application stages and notes stay in this browser session. Nothing is submitted to an employer from the tracker." if public_demo_mode() else "Application stages and notes are stored locally on this computer. Nothing is submitted to an employer from the tracker."))

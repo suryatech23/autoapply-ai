@@ -32,6 +32,13 @@ If PowerShell blocks virtual-environment activation, run the app with `.venv\Scr
 
 You can use the app in guest mode. To create AI-assisted drafts, choose Groq or Gemini in the Career Studio sidebar and save that provider key on this device. The key is stored in `.streamlit/secrets.toml`; the app does not bundle or create a key for you.
 
+## Share a judge demo
+
+For an online demo, deploy this repository on Streamlit Community Cloud using branch main and entry point app.py. Before launching the public app, set AUTOAPPLY_PUBLIC_DEMO = true in the deployment's Secrets / Advanced settings. In this mode, profile and tracker data stay in the current browser session, and provider keys are never written to shared app files. Keep Google sign-in optional and use guest mode for judges unless you configure the hosted OAuth callback.
+
+Do not add paid AI provider keys to a public demo without usage controls. This repository does not include a shared provider key; AI generation and transcription need a provider key for the current session. Keep the local app available as an onsite fallback.
+
+For hosted Google sign-in, configure the exact redirect URI https://<your-app-subdomain>.streamlit.app/oauth2callback in both Streamlit secrets and the Google OAuth web client. The local localhost redirect URI does not work for the hosted URL. The consent screen may still restrict sign-in to listed test users.
 ## Google sign-in
 
 Google sign-in is optional for a local demo; guest mode remains available. To configure OIDC, replace the placeholders in `.streamlit/secrets.toml` with the Google web client values and register these local URLs in the Google Cloud OAuth client:

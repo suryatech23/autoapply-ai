@@ -28,6 +28,11 @@ flowchart LR
 | Voice recording | Uploaded to the Streamlit process and sent for transcription only after separate consent | App does not write recordings to disk |
 | Generated resume/letter | Streamlit session and the user's download location | Not stored as a server-side account document |
 
+## Public demo mode
+
+When the Streamlit Community Cloud deployment sets AUTOAPPLY_PUBLIC_DEMO to true, profile preferences and tracker entries are kept in Streamlit session state instead of shared app files. Those values are temporary and isolated per browser session. Provider keys entered by a visitor are also held only in that session; saving keys to the server filesystem is disabled. Resume uploads and generated drafts remain session data as described above.
+
+The public demo does not include a shared AI provider key. Visitors who choose AI features provide their own key for that session. Keep Google sign-in optional until the hosted redirect URI is configured; the guest path is suitable for a judge demo. This mode reduces cross-visitor data exposure but does not replace a production account database or deployment security review.
 ## Trust boundaries
 
 - Job descriptions, resumes, and spoken audio are source data, not instructions to the model.
